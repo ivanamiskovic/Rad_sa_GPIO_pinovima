@@ -1,0 +1,93 @@
+/*
+Napisati sledece funkcije:
+
+void turn_on_color_led(uint8_t color)
+void turn_off_color_led(uint8_t color)
+Funkcija turn_on_color_led pali, a funkcija turn_off_color_led gasi svetlece diode na Tivi. Dioda koju treba upaliti ili ugasiti zavisi od vrednosti prosledjenog parametra color:
+
+Ukoliko je vrednost parametra color jednaka 1, funkcija void turn_on_color_led pali zelenu diodu.
+Ukoliko je vrednost parametra color jednaka 2, funkcija void turn_on_color_led pali plavu diodu.
+Ukoliko je vrednost parametra color jednaka 3, funkcija void turn_on_color_led pali crvenu diodu.
+Ukoliko je vrednost parametra color jednaka bilo kojoj drugoj vrednosti, funkcija ne radi nista.
+Ista pravila vaze i za funkciju void turn_off_color_led, osim sto ona gasi diode umesto da ih pali.
+napisati program koji periodicno (u krug) pali svetlece diode na Tivi:
+
+Prilikom pokretanja programa, pali se crvena dioda
+Posle  pola sekunde, zelena dioda se gasi, a plava dioda se pali
+Posle još pola sekunde, plava dioda se gasi, a crvena dioda se pali
+Posle još pola sekunde, crvena dioda se gasi, a zelena dioda se pali
+Ovaj postupak se “zauvek” ponavlja u krug
+ zelena -> plava -> crvena ->zelena->plava->crvena.........
+ */
+
+
+#include <inttypes.h>
+#include <stdbool.h>
+#include "driverlib/sysctl.h"
+#include "driverlib/gpio.h"
+#include "inc/hw_memmap.h"
+#include "helper_library/helper.h"
+#define LED_COLOR_GREEN 1
+#define LED_COLOR_BLUE 2
+#define LED_COLOR_RED 3
+
+
+
+
+
+void turn_on_color_led(uint8_t color){
+    switch(color){
+    case LED_COLOR_GREEN:
+        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0xFF);
+                    break;
+    case LED_COLOR_BLUE:
+        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0xFF);
+                    break;
+    case LED_COLOR_RED:
+        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0xFF);
+                    break;
+    default:
+        break;
+    }
+}
+
+void turn_off_color_led(uint8_t color){
+
+    switch(color)
+       {
+    case LED_COLOR_GREEN:
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0x00);
+            break;
+        case LED_COLOR_BLUE:
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0x00);
+            break;
+        case LED_COLOR_RED:
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0x00);
+            break;
+        default:
+            break;
+       }
+}
+int main(void)
+{
+    uint8_t led_number = 1;
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2);
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);
+    while (1)
+    {
+
+        turn_on_color_led(led_number);
+        delay(500);
+        turn_off_color_led(led_number);
+
+        led_number++;
+        if(led_number == 4)
+        {
+            led_number = 1;
+        }
+
+    }
+
+}
