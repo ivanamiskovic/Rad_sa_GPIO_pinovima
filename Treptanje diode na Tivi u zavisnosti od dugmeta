@@ -1,0 +1,73 @@
+/*Napisite program za Tiva razvojnu plocicu: treba da trepce crvenom svetlecom diodom na Tivi, dok istovremeno omogucava citanje stanja levog tastera.
+ *  Ako je levi taster pritisnut,trepcuca dioda se zaustavlja i ostaje upaljena crvena dioda sve dok je taster pritisnut, a kada se taster otpusti,
+ *  treptanje se nastavlja.
+ Uz to, program treba da omoguci paljenje zelene diode kada su oba tastera pritisnuta, a da se zelena dioda gasi kada nije ispunjen taj uslov.
+*/
+
+#include "helper_library/helper.h"
+#include <inttypes.h>
+#include <stdbool.h>
+#include "driverlib/sysctl.h"
+#include "driverlib/gpio.h"
+#include "inc/hw_memmap.h"
+
+int main(void)
+{
+    bool left_button_pressed, right_button_pressed;
+    uint8_t pin_state;
+
+
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2);
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);
+
+    GPIOUnlockPin(GPIO_PORTF_BASE, GPIO_PIN_0);
+
+    GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_0);
+
+    GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4);
+
+    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_0, GPIO_STRENGTH_2MA,
+                     GPIO_PIN_TYPE_STD_WPU);
+
+    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4, GPIO_STRENGTH_2MA,
+                     GPIO_PIN_TYPE_STD_WPU);
+
+    while (1)
+    {
+        pin_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4);
+        if (pin_state == 0x00)
+        {
+            left_button_pressed = true;
+        }
+        else
+        {
+            left_button_pressed = false;
+        }
+
+        pin_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_0);
+        right_button_pressed = (pin_state == 0x00) ? true : false;
+
+        if (left_button_pressed && right_button_pressed)
+        {
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0xFF);
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0x00);
+        }
+        else if (left_button_pressed)
+        {
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0xFF);
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0x00);
+        }
+        else
+        {
+
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0xFF);
+            delay(500);
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0x00);
+            delay(500);
+        }
+
+    }
+}
