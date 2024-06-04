@@ -1,0 +1,163 @@
+/*Povezati svetlecu diodu Sensor Kit-a (pin D6 na Sensor Kit-u) sa pinom PA2 Tiva razvojne plocice. Povezati dugme Sensor Kit-a (pin D4 na Sensor Kit-u) sa pinom PA3 Tiva razvojne plocice.
+
+Izmeniti sledecu funkciju :
+
+bool read_button_state(uint8_t button);
+Funkcija bi trebalo da procita stanje tastera Sensor Kit-a u slucaju da je prosledjena vrednost argumenta button jednaka 3.
+
+Upotrebom prosirenih funkcija, napisati program koji periodicno (u krug) pali svetlece diode na Tivi i Sensor Kit-u:
+
+Upotrebom prosirenih funkcija turn_on_color_led, turn_off_color_led i read_button_state, napisati program koji pali svetlece diode na Tivi i Sensor Kit-u u zavisnosti od toga koji tasteri su pritisnuti:
+
+Ukoliko je pritisnut levi taster Tive, plava dioda na Tivi je upaljena. Ukoliko levi taster nije pritisnut, plava dioda Tive je ugasena.
+Ukoliko je pritisnut desni taster Tive, crvena dioda na Tivi je upaljena. Ukoliko desni taster nije pritisnut, crvena dioda Tive je ugasena.
+Ukoliko je pritisnut taster Sensor Kit-a, svetleca dioda Sensor Kit-a je upaljena. Ukoliko taster nije pritisnut, svetleca dioda Sensor Kit-a je ugasena.
+*/
+
+#include "helper_library/helper.h"
+#include <inttypes.h>
+#include <stdbool.h>
+#include "driverlib/sysctl.h"
+#include "driverlib/gpio.h"
+#include "inc/hw_memmap.h"
+
+#include <inttypes.h>
+#include <stdbool.h>
+#include "driverlib/sysctl.h"
+#include "driverlib/gpio.h"
+#include "inc/hw_memmap.h"
+#include "helper_library/helper.h"
+
+#define BUTTON_LEFT   1
+#define BUTTON_RIGHT  2
+#define BUTTON_SENSOR  3
+
+#define LED_COLOR_RED   1
+#define LED_COLOR_BLUE  2
+#define LED_COLOR_SENSOR  3
+
+bool read_button_state(uint8_t button)
+{
+    uint32_t pin_state;
+
+    int8_t pin_state1;
+                      bool button_pressed;
+
+    if (button == BUTTON_LEFT)
+    {
+        pin_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_4); // Left button
+    }
+    else if (button == BUTTON_RIGHT)
+    {
+        pin_state = GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_0); // Right button
+    }
+
+    pin_state1 = GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_3);
+                    if(pin_state1 == 0x00)
+                             {
+                                 /* If the button is pressed, GPIOPinRead returns 0x00 */
+                          button_pressed = false;
+                             }
+                             else
+                             {
+                                 /* If the button is not pressed, GPIOPinRead returns 0x10 */
+                                 button_pressed = true;
+                             }
+
+                             /* Turn on the red LED if the button is pressed */
+                             if(button_pressed)
+                             {
+                                 GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_2, 0xFF);
+                             }
+                             else
+                             {
+                                 GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_2, 0x00);
+                             }
+    return (pin_state == 0x00) ? true : false;
+}
+
+void turn_on_color_led(uint8_t color)
+{
+    switch(color)
+    {
+        case LED_COLOR_RED:
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0xFF); // Turn on red LED
+            break;
+        case LED_COLOR_BLUE:
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0xFF); // Turn on blue LED
+            break;
+        case LED_COLOR_SENSOR:
+                   GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_2, 0xFF); // Turn on blue LED
+                   break;
+        default:
+            break;
+    }
+}
+
+void turn_off_color_led(uint8_t color)
+{
+    switch(color)
+    {
+        case LED_COLOR_RED:
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0x00); // Turn off red LED
+            break;
+        case LED_COLOR_BLUE:
+            GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0x00); // Turn off blue LED
+            break;
+        case LED_COLOR_SENSOR:
+                          GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_2, 0x00); // Turn on blue LED
+                          break;
+        default:
+            break;
+    }
+}
+
+int main(void)
+{
+    /* Initialize peripherals */
+ helper_library_init();
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, GPIO_PIN_2); // Sensor Kit LED (pin D6)
+
+        /* Configure Button pins as input */
+      GPIOPinTypeGPIOInput(GPIO_PORTA_BASE,  GPIO_PIN_3); // Left and Right buttons
+
+    /* Main loop */
+    while(1)
+    {
+
+
+        /* Check button states */
+        bool left_button_pressed = read_button_state(BUTTON_LEFT);
+        bool right_button_pressed = read_button_state(BUTTON_RIGHT);
+        bool sensor_pressed = read_button_state(BUTTON_SENSOR);
+
+        /* Control LEDs based on button states */
+        if (left_button_pressed)
+        {
+            turn_on_color_led(LED_COLOR_RED);
+        }
+        else
+        {
+            turn_off_color_led(LED_COLOR_RED);
+        }
+
+        if (right_button_pressed)
+        {
+            turn_on_color_led(LED_COLOR_BLUE);
+        }
+        else
+        {
+            turn_off_color_led(LED_COLOR_BLUE);
+        }
+        if (sensor_pressed)
+              {
+                  turn_on_color_led(LED_COLOR_SENSOR);
+              }
+              else
+              {
+                  turn_off_color_led(LED_COLOR_SENSOR);
+              }
+    }
+}
